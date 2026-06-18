@@ -1,3 +1,5 @@
+
+/*
 import { useState } from "react";
 import type { Post } from "../types/Post";
 
@@ -59,3 +61,5 @@ export default function CreatePostModal({
     </div>
   );
 }
+
+*/

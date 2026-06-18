@@ -1,17 +1,71 @@
 import { useState } from "react";
+import { addDoc, collection } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+import { db } from "../firebase";
 
 export default function CreatePost() {
+  const navigate = useNavigate();
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [category, setCategory] = useState("General");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    alert("Publicación creada");
+const handleSubmit = async () => {
+  console.log("🚀 Iniciando publicación");
 
-    console.log({
+  if (!title.trim() || !content.trim()) {
+    alert("Completa todos los campos.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    console.log("📦 DB:", db);
+
+    const postData = {
       title,
       content,
-    });
-  };
+      category,
+      likes: 0,
+      alias:
+        "Anónimo #" +
+        Math.floor(1000 + Math.random() * 9000),
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log("📝 Datos a guardar:", postData);
+
+    const docRef = await addDoc(
+      collection(db, "posts"),
+      postData
+    );
+
+    console.log(
+      "✅ Documento guardado:",
+      docRef.id
+    );
+
+    alert("Publicación creada");
+
+    setTitle("");
+    setContent("");
+
+    navigate("/");
+  } catch (error: any) {
+    console.error("❌ ERROR FIREBASE:", error);
+
+    alert(
+      `Error: ${
+        error?.message || "Error desconocido"
+      }`
+    );
+  } finally {
+    console.log("🏁 Finalizando proceso");
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
@@ -44,10 +98,36 @@ export default function CreatePost() {
 
           <div className="h-px bg-gray-200 my-6"></div>
 
+          <select
+            value={category}
+            onChange={(e) =>
+              setCategory(e.target.value)
+            }
+            className="
+              w-full
+              p-3
+              rounded-xl
+              border
+              border-gray-200
+              mb-6
+            "
+          >
+            <option>General</option>
+            <option>Amor</option>
+            <option>Historias</option>
+            <option>Humor</option>
+            <option>Escuela</option>
+            <option>Trabajo</option>
+            <option>Opiniones</option>
+            <option>Confesiones</option>
+          </select>
+
           <textarea
             placeholder="¿Qué quieres compartir hoy?"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) =>
+              setContent(e.target.value)
+            }
             className="
               w-full
               min-h-[300px]
@@ -62,6 +142,7 @@ export default function CreatePost() {
           <div className="flex justify-end mt-8">
             <button
               onClick={handleSubmit}
+              disabled={loading}
               className="
                 bg-black
                 text-white
@@ -70,9 +151,12 @@ export default function CreatePost() {
                 rounded-full
                 hover:opacity-90
                 transition
+                disabled:opacity-50
               "
             >
-              Publicar
+              {loading
+                ? "Publicando..."
+                : "Publicar"}
             </button>
           </div>
         </div>

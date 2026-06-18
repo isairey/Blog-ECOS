@@ -82,6 +82,21 @@ export default function Navbar() {
             >
               ✍️ Escribir
             </Link>
+
+            <Link
+  to="/publicaciones"
+  className={`
+    text-sm
+    transition
+    ${
+      isActive("/publicaciones")
+        ? "text-black font-medium"
+        : "text-gray-500 hover:text-black"
+    }
+  `}
+>
+  Publicaciones
+</Link>
           </div>
         </div>
       </div>
