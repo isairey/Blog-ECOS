@@ -5,4 +5,5 @@ export interface Post {
   category: string;
   likes: number;
   alias: string;
+  createdAt: string;
 }
