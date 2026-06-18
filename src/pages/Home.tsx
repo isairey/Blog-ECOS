@@ -5,6 +5,7 @@ import {
   query,
   orderBy,
   onSnapshot,
+
 } from "firebase/firestore";
 import { db } from "../firebase";
 import PostCard from "../components/PostCard";
@@ -22,7 +23,7 @@ const categories = [
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   useEffect(() => {
     const q = query(
@@ -31,10 +32,19 @@ export default function Home() {
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Post[];
+      const data: Post[] = snap.docs.map((doc) => {
+  const d = doc.data();
+
+        return {
+          id: doc.id,
+          title: d.title,
+          content: d.content,
+          category: d.category,
+          likes: d.likes,
+          alias: d.alias,
+          createdAt: d.createdAt,
+        };
+      });
 
       setPosts(data);
     });
@@ -42,11 +52,13 @@ export default function Home() {
     return () => unsub();
   }, []);
 
-  const filtered = selectedCategory
-    ? posts.filter((p) => p.category === selectedCategory)
-    : posts;
+  const filteredPosts =
+    selectedCategory.length > 0
+      ? posts.filter((p) => p.category === selectedCategory)
+      : posts;
 
-  const topPosts = [...posts]
+  const topPosts = posts
+    .slice()
     .sort((a, b) => b.likes - a.likes)
     .slice(0, 5);
 
@@ -62,29 +74,17 @@ export default function Home() {
         <h1 className="text-5xl md:text-7xl font-semibold mt-6 leading-tight">
           Expresa lo que piensas,
           <br />
-          sin que nadie te juzgue.
+          sin ser juzgado.
         </h1>
 
         <p className="text-gray-500 mt-6 max-w-2xl mx-auto text-lg">
-          ECOS es un espacio minimalista donde puedes publicar
-          pensamientos, historias y confesiones de forma completamente anónima.
+          ECOS es un espacio donde puedes compartir ideas,
+          pensamientos y confesiones de forma totalmente anónima.
         </p>
 
         <Link
           to="/crear"
-          className="
-            inline-flex
-            mt-10
-            px-8
-            py-4
-            rounded-full
-            bg-black
-            text-white
-            text-sm
-            font-medium
-            hover:scale-105
-            transition
-          "
+          className="inline-flex mt-10 px-8 py-4 rounded-full bg-black text-white text-sm font-medium hover:scale-105 transition"
         >
           ✍️ Escribir publicación
         </Link>
@@ -94,25 +94,23 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-6 mb-16">
         <div className="grid md:grid-cols-3 gap-6">
 
-          <div className="bg-white rounded-3xl p-8 border hover:shadow-sm transition">
+          <div className="bg-white rounded-3xl p-8 border">
             <p className="text-gray-500 text-sm">Publicaciones</p>
             <h2 className="text-4xl font-semibold mt-2">
               {posts.length}
             </h2>
           </div>
 
-          <div className="bg-white rounded-3xl p-8 border hover:shadow-sm transition">
+          <div className="bg-white rounded-3xl p-8 border">
             <p className="text-gray-500 text-sm">Reacciones</p>
             <h2 className="text-4xl font-semibold mt-2">
-              {posts.reduce((t, p) => t + p.likes, 0)}
+              {posts.reduce((t, p) => t + (p.likes || 0), 0)}
             </h2>
           </div>
 
-          <div className="bg-white rounded-3xl p-8 border hover:shadow-sm transition">
+          <div className="bg-white rounded-3xl p-8 border">
             <p className="text-gray-500 text-sm">Anonimato</p>
-            <h2 className="text-4xl font-semibold mt-2">
-              100%
-            </h2>
+            <h2 className="text-4xl font-semibold mt-2">100%</h2>
           </div>
 
         </div>
@@ -125,21 +123,18 @@ export default function Home() {
           {/* FEED */}
           <div className="lg:col-span-2">
 
-            {/* HEADER */}
-            <div className="flex justify-between items-end mb-8">
-              <div>
-                <h2 className="text-3xl font-semibold">
-                  {selectedCategory || "Recientes"}
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">
-                  {filtered.length} publicaciones
-                </p>
-              </div>
+            <div className="mb-8">
+              <h2 className="text-3xl font-semibold">
+                {selectedCategory || "Recientes"}
+              </h2>
+
+              <p className="text-gray-500 text-sm mt-1">
+                {filteredPosts.length} publicaciones
+              </p>
             </div>
 
-            {/* POSTS */}
             <div className="space-y-6">
-              {filtered.map((post) => (
+              {filteredPosts.map((post) => (
                 <PostCard
                   key={post.id}
                   post={post}
@@ -160,11 +155,8 @@ export default function Home() {
 
               <div className="space-y-4">
                 {topPosts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="border-b pb-3 last:border-none"
-                  >
-                    <p className="font-medium text-sm">
+                  <div key={post.id} className="pb-3 border-b last:border-none">
+                    <p className="font-medium text-sm line-clamp-1">
                       {post.title}
                     </p>
                     <span className="text-xs text-gray-500">
@@ -184,7 +176,11 @@ export default function Home() {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedCategory("")}
-                  className="px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200"
+                  className={`px-3 py-1 text-sm rounded-full transition ${
+                    selectedCategory === ""
+                      ? "bg-black text-white"
+                      : "bg-gray-100 hover:bg-gray-200"
+                  }`}
                 >
                   Todas
                 </button>
@@ -192,9 +188,7 @@ export default function Home() {
                 {categories.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() =>
-                      setSelectedCategory(cat)
-                    }
+                    onClick={() => setSelectedCategory(cat)}
                     className={`px-3 py-1 text-sm rounded-full transition ${
                       selectedCategory === cat
                         ? "bg-black text-white"

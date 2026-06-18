@@ -7,6 +7,7 @@ import Popular from "./pages/Popular";
 import CreatePost from "./pages/CreatePost";
 import Posts from "./pages/Posts";
 import PostDetail from "./pages/PostDetail";
+import CategoryPage from "./pages/CategoryPage";
 
 export default function App() {
   return (
@@ -32,6 +33,10 @@ export default function App() {
         />
 
         <Route path="/post/:id" element={<PostDetail />} />
+
+
+        {/* 🔥 CATEGORÍAS */}
+        <Route path="/categoria/:category" element={<CategoryPage />} />
       </Routes>
     </BrowserRouter>
   );
